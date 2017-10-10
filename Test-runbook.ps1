@@ -45,7 +45,8 @@ try {
     $VMs = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
 }
 Catch {
-    Write-Error -Message $_.Exception -ErrorAction Stop
+    Write-Error -Message $_.Exception
+    throw $_.Exception
 }
 
 #If no VMs are returned throw exception
