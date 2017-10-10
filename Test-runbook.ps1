@@ -1,10 +1,10 @@
 <#
     .DESCRIPTION
-        An example runbook which gets all the ARM resources using the Run As Account (Service Principal)
+        An example runbook which gets all the ARM VMs using the Run As Account (Service Principal)
 
     .NOTES
-        AUTHOR: Azure Automation Team
-        LASTEDIT: Mar 14, 2016
+        Based on the Azure Automation Team script
+       
 #>
 
 $connectionName = "AzureRunAsConnection"
@@ -31,5 +31,17 @@ catch {
     }
 }
 
-#Get all VMs and display name
-Get-AzureRMVM | Select-Object Name
+#Get VM with specific name that is deallocated
+$VMs = Get-AzureRMVM -Status | Where-Object {$_.Name -eq "WES-LAB" -and $_.PowerState -like "*deallocated*"}
+
+#If no VMs are returned throw exception
+if (!$VMs){
+    throw "No VMs to be started"
+}
+
+#Else start VMs
+Else {
+    foreach ($VM in $VMs) {
+        $VM | Start-AzureRmVM
+    }
+}
