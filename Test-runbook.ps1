@@ -8,12 +8,21 @@
 
 # Parameters
 Param(
-    [Parameter(Mandatory)]
+    # Resource group
+    [Parameter(
+        Mandatory=$true,
+        HelpMessage="Enter the resource group that all VMs belong to"
+    )]
     [string]
     $ResourceGroupName,
-    [Parameter(Mandatory)]
+    
+    # VM Names
+    [Parameter(
+        Mandatory=$true,
+        HelpMessage="Enter VM names, comma separated"
+    )]
     [string]
-    $VMName
+    $VMNames
 )
 
 $connectionName = "AzureRunAsConnection"
@@ -42,21 +51,15 @@ catch {
 
 #Get VM with specific name that is deallocated
 try {
-    $VMs = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
+    foreach ($VMName in $VMNames){
+        #Get VM Object
+        $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName | Where-Object PowerState -like "*deallocated*"
+        
+        #Start VM
+        $VMObject | Start-AzureRmVM
+    }
 }
 Catch {
     Write-Error -Message $_.Exception
     throw $_.Exception
-}
-
-#If no VMs are returned throw exception
-if (!$VMs){
-    throw "No VMs to be started."
-}
-
-#Else start VMs
-Else {
-    foreach ($VM in $VMs) {
-        $VM | Start-AzureRmVM
-    }
 }
