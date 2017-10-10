@@ -6,6 +6,16 @@
         Based on the Azure Automation Team script   
 #>
 
+# Parameters
+Param(
+    [Parameter(Mandatory)]
+    [string]
+    $ResourceGroupName,
+    [Parameter(Mandatory)]
+    [string]
+    $VMName
+)
+
 $connectionName = "AzureRunAsConnection"
 try
 {
@@ -32,7 +42,7 @@ catch {
 
 #Get VM with specific name that is deallocated
 try {
-    $VMs = Get-AzureRMVM -ResourceGroupName "TESTLAB223916554000" -Status | Where-Object {$_.Name -eq "WES-LAB" -and $_.PowerState -like "*deallocated*"}
+    $VMs = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
 }
 Catch {
     Write-Error -Message $_.Exception -ErrorAction Stop
