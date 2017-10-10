@@ -21,7 +21,7 @@ Param(
         Mandatory=$true,
         HelpMessage="Enter VM names, comma separated"
     )]
-    [string]
+    [string[]]
     $VMNames
 )
 
