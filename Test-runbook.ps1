@@ -1,9 +1,10 @@
 <#
     .DESCRIPTION
-        An example runbook which gets all the ARM VMs using the Run As Account (Service Principal)
+        A runbook workflow that gets Azure VMs within a resource group, and starts them,
+        using the Run As Account (Service Principal) of Azure automation.
 
     .NOTES
-        Based on the Azure Automation Team script   
+        Initially based on the Azure Automation Team script.
 #>
 
 # Parameters
@@ -51,16 +52,14 @@ catch {
 
 #Get VM with specific name that is deallocated
 try {
-    Workflow Start-Parallel {
-        foreach -parallel ($VMName in $VMNames){
-            #Get VM Object
-            $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
-            #Get status
-            $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*deallocated*"}
+    foreach ($VMName in $VMNames){
+        #Get VM Object
+        $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
+        #Get status
+        $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*deallocated*"}
 
-            #Start VM
-            $VMObject | Start-AzureRmVM
-        }
+        #Start VM
+        $VMObject | Start-AzureRmVM
     }
 }
 Catch {
