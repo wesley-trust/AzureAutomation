@@ -30,7 +30,7 @@ Param(
         Mandatory=$true,
         HelpMessage="Enter VM size"
     )]
-    [string[]]
+    [string]
     $VMSize
 )
 
@@ -73,7 +73,7 @@ try {
 
         #Update VM
         Write-Host "Updating VM:$VMName"
-        $VMObject | Update-AzureRmVM
+        Update-AzureRmVM -VM $VMObject -ResourceGroupName $ResourceGroupName
     }
 }
 Catch {
