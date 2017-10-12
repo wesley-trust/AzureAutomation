@@ -1,6 +1,6 @@
 <#
     .DESCRIPTION
-        A runbook workflow that gets Azure VMs within a resource group, and starts them,
+        A script that gets Azure VMs within a resource group, and resizes them,
         using the Run As Account (Service Principal) of Azure automation.
 
     .NOTES
@@ -63,7 +63,7 @@ if (!$VMNames){
     $VMNames = ($VMObjects).Name
 }
 
-#Get VMs with deallocated status and start
+#Get VM object, set size, update VM
 try {
     foreach ($VMName in $VMNames){
         $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Name $VMName
