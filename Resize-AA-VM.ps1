@@ -23,7 +23,15 @@ Param(
         HelpMessage="Enter VM names in array notation"
     )]
     [string[]]
-    $VMNames 
+    $VMNames,
+
+    # VM Size
+    [Parameter(
+        Mandatory=$true,
+        HelpMessage="Enter VM size"
+    )]
+    [string[]]
+    $VMSize
 )
 
 $connectionName = "AzureRunAsConnection"
@@ -58,14 +66,14 @@ if (!$VMNames){
 #Get VMs with deallocated status and start
 try {
     foreach ($VMName in $VMNames){
-        $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
+        $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Name $VMName
         
-        #Get status
-        $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
+        #Set VM size
+        $VMObject.HardwareProfile.VmSize = $VMSize
 
-        #Start VM
-        Write-Host "Stopping VM:$VMName"
-        $VMObject | Stop-AzureRmVM -Force
+        #Update VM
+        Write-Host "Updating VM:$VMName"
+        $VMObject | Update-AzureRmVM
     }
 }
 Catch {
