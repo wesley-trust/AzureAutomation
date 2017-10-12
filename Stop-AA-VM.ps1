@@ -61,10 +61,10 @@ try {
         $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
         
         #Get status
-        $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*deallocated*"}
+        $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
 
         #Start VM
-        Write-Host "Starting VM:$VMName"
+        Write-Host "Stopping VM:$VMName"
         $VMObject | Start-AzureRmVM
     }
 }
