@@ -68,6 +68,7 @@ catch {
     }
 }
 
+# If there are no VMs in array, get VMs and populate names in variable
 if (!$VMNames){
     $VMObjects = Get-AzureRmResourceGroup -ResourceGroupName $ResourceGroupName | Get-AzureRmVM
     $VMNames = ($VMObjects).Name
@@ -120,7 +121,7 @@ try {
                 }
 
                 # Unsupported size
-                throw "Unsupported size."
+                throw "VM size is not supported for this VM."
             }
                     
             # Set new VM size
