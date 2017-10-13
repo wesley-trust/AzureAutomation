@@ -77,15 +77,15 @@ try {
             $SupportedVMSize = Get-AzureRmVMSize -Location $VMObject.Location
 
             # Invalid size
-            if ($SupportedVMSize.name -ne $VMSize){
-                Write-Error "VM size is invalid or not available in that location." -ErrorAction Stop
+            if ($SupportedVMSize.name -notcontains $VMSize){
+                throw "VM size is invalid or not available in that location."
             }
 
             # Get supported sizes for VM
             $SupportedVMSize = Get-AzureRmVMSize -ResourceGroupName $ResourceGroupName -VMName $VMName
 
             # If the VM size is not supported
-            if ($SupportedVMSize.name -ne $VMSize){
+            if ($SupportedVMSize.name -notcontains $VMSize){
 
                 # Get running status
                 $VMStatus = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
@@ -101,7 +101,7 @@ try {
                     $SupportedVMSize = Get-AzureRmVMSize -ResourceGroupName $ResourceGroupName -VMName $VMName
 
                     # If the VM size is still not supported
-                    if ($SupportedVMSize.name -ne $VMSize){
+                    if ($SupportedVMSize.name -notcontains $VMSize){
                     
                         # Restart VM
                         Write-Host "Starting VM:$VMName"
@@ -110,7 +110,7 @@ try {
                 }
 
                 # Unsupported size
-                Write-Error "Unsupported size." -ErrorAction Stop
+                throw "Unsupported size."
             }
                     
             # Set new VM size
@@ -121,7 +121,7 @@ try {
             Update-AzureRmVM -VM $VMObject -ResourceGroupName $ResourceGroupName
         }
         Else {
-            Write-Error "VM cannot be resized as it is already the intended size."
+            throw "VM cannot be resized as it is already the intended size."
         }      
     }
 }
