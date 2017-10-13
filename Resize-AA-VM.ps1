@@ -12,6 +12,7 @@
     A script that gets Azure VMs within a resource group, and resizes them,
     when no VMs are specified, all VMs within the resource group are used,
     includes error checking for valid VM size and supported location,
+    attempts to deallocate VM when size is unsupported,
     designed to run in Azure Automation using the Run As Account (Service Principal).
 
 #>
