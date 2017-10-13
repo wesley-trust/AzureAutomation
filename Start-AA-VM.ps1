@@ -1,10 +1,18 @@
 <#
-    .DESCRIPTION
-        A script that gets Azure VMs within a resource group, and starts them,
-        using the Run As Account (Service Principal) of Azure automation.
 
-    .NOTES
-        Initially based on the Azure Automation Team script.
+#Script name: Start-AA-VM
+#Creator: Wesley Trust
+#Date: 2017-10-10
+#Revision: 2
+#References: Initially based on the Azure Automation Team script from the Azure portal.
+
+.Synopsis
+    A script that gets Azure VMs within a resource group, and starts them.
+.DESCRIPTION
+    A script that gets Azure VMs within a resource group, and starts them,
+    when no VMs are specified, all VMs within the resource group are used,
+    designed to run in Azure Automation using the Run As Account (Service Principal).
+
 #>
 
 # Parameters

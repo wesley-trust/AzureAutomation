@@ -1,10 +1,19 @@
 <#
-    .DESCRIPTION
-        A script that gets Azure VMs within a resource group, and resizes them,
-        using the Run As Account (Service Principal) of Azure automation.
 
-    .NOTES
-        Initially based on the Azure Automation Team script.
+#Script name: Resize-AA-VM
+#Creator: Wesley Trust
+#Date: 2017-10-10
+#Revision: 2
+#References: Initially based on the Azure Automation Team script from the Azure portal.
+
+.Synopsis
+    A script that gets Azure VMs within a resource group, and resizes them.
+.DESCRIPTION
+    A script that gets Azure VMs within a resource group, and resizes them,
+    when no VMs are specified, all VMs within the resource group are used,
+    includes error checking for valid VM size and supported location,
+    designed to run in Azure Automation using the Run As Account (Service Principal).
+
 #>
 
 # Parameters
