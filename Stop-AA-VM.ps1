@@ -63,7 +63,7 @@ try {
         #Get status
         $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
 
-        #Start VM
+        #Stop VM
         Write-Host "Stopping VM:$VMName"
         $VMObject | Stop-AzureRmVM -Force
     }

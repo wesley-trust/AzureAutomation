@@ -63,17 +63,66 @@ if (!$VMNames){
     $VMNames = ($VMObjects).Name
 }
 
-#Get VM object, set size, update VM
+#Get VM object, supported sizes, set size, update VM
 try {
     foreach ($VMName in $VMNames){
-        $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Name $VMName
         
-        #Set VM size
-        $VMObject.HardwareProfile.VmSize = $VMSize
+        # Get VM Object
+        $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Name $VMName
 
-        #Update VM
-        Write-Host "Updating VM:$VMName"
-        Update-AzureRmVM -VM $VMObject -ResourceGroupName $ResourceGroupName
+        # If the VM is not already the intended size
+        if ($VMObject.HardwareProfile.VmSize -ne $VMSize){
+
+            # Get supported sizes in location of VM
+            $SupportedVMSize = Get-AzureRmVMSize -Location $VMObject.Location
+
+            # Invalid size
+            if ($SupportedVMSize.name -ne $VMSize){
+                Write-Error "VM size is invalid or not available in that location." -ErrorAction Stop
+            }
+
+            # Get supported sizes for VM
+            $SupportedVMSize = Get-AzureRmVMSize -ResourceGroupName $ResourceGroupName -VMName $VMName
+
+            # If the VM size is not supported
+            if ($SupportedVMSize.name -ne $VMSize){
+
+                # Get running status
+                $VMStatus = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
+
+                # If the VM is running
+                if ($VMStatus){
+
+                    # Deallocated VM
+                    Write-Host "Stopping VM:$VMName"
+                    $VMObject | Stop-AzureRmVM -Force
+
+                    # Get new supported sizes for VM
+                    $SupportedVMSize = Get-AzureRmVMSize -ResourceGroupName $ResourceGroupName -VMName $VMName
+
+                    # If the VM size is still not supported
+                    if ($SupportedVMSize.name -ne $VMSize){
+                    
+                        # Restart VM
+                        Write-Host "Starting VM:$VMName"
+                        $VMObject | Start-AzureRmVM
+                    }          
+                }
+
+                # Unsupported size
+                Write-Error "Unsupported size." -ErrorAction Stop
+            }
+                    
+            # Set new VM size
+            $VMObject.HardwareProfile.VmSize = $VMSize
+
+            # Update VM
+            Write-Host "Updating VM:$VMName"
+            Update-AzureRmVM -VM $VMObject -ResourceGroupName $ResourceGroupName
+        }
+        Else {
+            Write-Error "VM cannot be resized as it is already the intended size."
+        }      
     }
 }
 Catch {
