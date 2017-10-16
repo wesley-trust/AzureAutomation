@@ -38,7 +38,7 @@ Param(
         Mandatory=$false,
         HelpMessage="If true, started VMs will be restarted."
     )]
-    [string]
+    [bool]
     $Started = $true,
 
     # Stopped Status
@@ -46,7 +46,7 @@ Param(
         Mandatory=$false,
         HelpMessage="If true, stopped VMs will be started."
     )]
-    [string]
+    [bool]
     $Stopped = $false
 )
 
@@ -93,7 +93,7 @@ try {
             $VMObject | Restart-AzureRmVM
         }
 
-        if ($Stopped){
+        elseif ($Stopped){
             #Get status
             $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*deallocated*"}
 
