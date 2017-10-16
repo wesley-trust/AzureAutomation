@@ -79,9 +79,11 @@ if (!$VMNames){
     $VMNames = ($VMObjects).Name
 }
 
-#Get VMs with deallocated status and start
+#Get VMs, check variables, get status and re/start as needed.
 try {
     foreach ($VMName in $VMNames){
+        
+        # Get VM objects
         $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
         
         # If started variable is true, get running VMs to restart.
