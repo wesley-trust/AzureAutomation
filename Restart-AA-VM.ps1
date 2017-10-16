@@ -33,20 +33,20 @@ Param(
     [string[]]
     $VMNames,
 
-    # VM Names
+    # Started Status
     [Parameter(
         Mandatory=$false,
         HelpMessage="If true, started VMs will be restarted."
     )]
-    [string[]]
+    [string]
     $Started = $true,
 
-    # VM Names
+    # Stopped Status
     [Parameter(
         Mandatory=$false,
-        HelpMessage="If true, stopped VMs will be restarted"
+        HelpMessage="If true, stopped VMs will be started."
     )]
-    [string[]]
+    [string]
     $Stopped = $false
 )
 
