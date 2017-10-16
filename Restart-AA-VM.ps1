@@ -84,21 +84,23 @@ try {
     foreach ($VMName in $VMNames){
         $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
         
+        # If started variable is true, get running VMs to restart.
         if ($Started){
-            #Get status
-            $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
+            # Get status
+            $VMObjectStarted = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
             
-            #Restart VM
+            # Restart VM
             Write-Host "Restarting VM:$VMName"
-            $VMObject | Restart-AzureRmVM
+            $VMObjectStarted | Restart-AzureRmVM
         }
-        elseif ($Stopped){
+        # If stopped variable is true, get stopped VMs to start.
+        if ($Stopped){
             #Get status
-            $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*deallocated*"}
+            $VMObjectStopped = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*deallocated*"}
 
             #Start VM
             Write-Host "Starting VM:$VMName"
-            $VMObject | Start-AzureRmVM
+            $VMObjectStopped | Start-AzureRmVM
         }
     }
 }
