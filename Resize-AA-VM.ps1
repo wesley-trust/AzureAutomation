@@ -41,7 +41,15 @@ Param(
         HelpMessage="Enter VM size"
     )]
     [string]
-    $VMSize
+    $VMSize,
+
+    # Deallocate
+    [Parameter(
+        Mandatory=$true,
+        HelpMessage="Deallocate VM if size is not available for VM"
+    )]
+    [bool]
+    $DeallocateIfRequired = $False
 )
 
 $connectionName = "AzureRunAsConnection"
@@ -84,7 +92,7 @@ try {
     if (!$VMNames){
         throw "No VMs to resize"
     }
-    
+
     foreach ($VMName in $VMNames){
         
         # Get VM Object
@@ -111,22 +119,24 @@ try {
                 $VMStatus = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
 
                 # If the VM is running
-                if ($VMStatus){
+                if ($DeallocateIfRequired){
+                    if ($VMStatus){
 
-                    # Deallocated VM
-                    Write-Host "Stopping VM:$VMName"
-                    $VMObject | Stop-AzureRmVM -Force
+                        # Deallocated VM
+                        Write-Host "Stopping VM:$VMName"
+                        $VMObject | Stop-AzureRmVM -Force
 
-                    # Get new supported sizes for VM
-                    $SupportedVMSize = Get-AzureRmVMSize -ResourceGroupName $ResourceGroupName -VMName $VMName
+                        # Get new supported sizes for VM
+                        $SupportedVMSize = Get-AzureRmVMSize -ResourceGroupName $ResourceGroupName -VMName $VMName
 
-                    # If the VM size is still not supported
-                    if ($SupportedVMSize.name -notcontains $VMSize){
-                    
-                        # Restart VM
-                        Write-Host "Starting VM:$VMName"
-                        $VMObject | Start-AzureRmVM
-                    }          
+                        # If the VM size is still not supported
+                        if ($SupportedVMSize.name -notcontains $VMSize){
+                        
+                            # Restart VM
+                            Write-Host "Starting VM:$VMName"
+                            $VMObject | Start-AzureRmVM
+                        }          
+                    }
                 }
 
                 # Unsupported size
