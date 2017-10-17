@@ -68,14 +68,23 @@ catch {
     }
 }
 
-# If there are no VMs in array, get VMs and populate names in variable
-if (!$VMNames){
-    $VMObjects = Get-AzureRmResourceGroup -ResourceGroupName $ResourceGroupName | Get-AzureRmVM
-    $VMNames = ($VMObjects).Name
-}
-
-#Get VM object, supported sizes, set size, update VM
+#Get VMs, check variables, resize as needed.
 try {
+    
+    # Get the resource group to check it exists, store in variable, if not catch exception
+    $ResourceGroup = Get-AzureRmResourceGroup -ResourceGroupName $ResourceGroupName
+
+    # If no VMs are specified in the parameter, get Get VM names from resource group
+    if (!$VMNames){
+        $VMObjects = $ResourceGroup | Get-AzureRmVM
+        $VMNames = ($VMObjects).Name
+    }
+    
+    # If there are still no VMs, throw exception
+    if (!$VMNames){
+        throw "No VMs to resize"
+    }
+    
     foreach ($VMName in $VMNames){
         
         # Get VM Object

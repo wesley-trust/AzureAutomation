@@ -43,7 +43,9 @@ Param(
 
 )
 
+# Azure Automation authentication
 $connectionName = "AzureRunAsConnection"
+
 try
 {
     # Get the connection "AzureRunAsConnection "
@@ -67,13 +69,24 @@ catch {
     }
 }
 
-if (!$VMNames){
-    $VMObjects = Get-AzureRmResourceGroup -ResourceGroupName $ResourceGroupName | Get-AzureRmVM
-    $VMNames = ($VMObjects).Name
-}
-
 #Get VMs, check variables, get status and re/start as needed.
 try {
+
+    # Get the resource group to check it exists, store in variable, if not catch exception
+    $ResourceGroup = Get-AzureRmResourceGroup -ResourceGroupName $ResourceGroupName
+
+    # If no VMs are specified in the parameter, get Get VM names from resource group
+    if (!$VMNames){
+        $VMObjects = $ResourceGroup | Get-AzureRmVM
+        $VMNames = ($VMObjects).Name
+    }
+    
+    # If there are still no VMs, throw exception
+    if (!$VMNames){
+        throw "No VMs to start"
+    }
+
+    # Process
     foreach ($VMName in $VMNames){
 
         # Get VM objects

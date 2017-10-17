@@ -58,22 +58,32 @@ catch {
     }
 }
 
-if (!$VMNames){
-    $VMObjects = Get-AzureRmResourceGroup -ResourceGroupName $ResourceGroupName | Get-AzureRmVM
-    $VMNames = ($VMObjects).Name
-}
-
-#Get VMs with deallocated status and stops
+#Get VMs, check variables, get status and stop as needed.
 try {
-    foreach ($VMName in $VMNames){
-        $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
-        
-        #Get status
-        $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
+    
+    # Get the resource group to check it exists, store in variable, if not catch exception
+    $ResourceGroup = Get-AzureRmResourceGroup -ResourceGroupName $ResourceGroupName
 
-        #Stop VM
-        Write-Host "Stopping VM:$VMName"
-        $VMObject | Stop-AzureRmVM -Force
+    # If no VMs are specified in the parameter, get Get VM names from resource group
+    if (!$VMNames){
+        $VMObjects = $ResourceGroup | Get-AzureRmVM
+        $VMNames = ($VMObjects).Name
+    }
+    
+    # If there are still no VMs, throw exception
+    if (!$VMNames){
+        throw "No VMs to stop"
+    }
+    
+    foreach ($VMName in $VMNames){
+    $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
+    
+    #Get status
+    $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
+
+    #Stop VM
+    Write-Host "Stopping VM:$VMName"
+    $VMObject | Stop-AzureRmVM -Force
     }
 }
 Catch {
