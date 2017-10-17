@@ -31,23 +31,7 @@ Param(
         HelpMessage="Enter VM names in array notation"
     )]
     [string[]]
-    $VMNames,
-
-    # Started Status
-    [Parameter(
-        Mandatory=$false,
-        HelpMessage="If true, started VMs will be restarted."
-    )]
-    [bool]
-    $Started = $true,
-
-    # Stopped Status
-    [Parameter(
-        Mandatory=$false,
-        HelpMessage="If true, stopped VMs will be started."
-    )]
-    [bool]
-    $Stopped = $false
+    $VMNames 
 )
 
 $connectionName = "AzureRunAsConnection"
@@ -79,31 +63,17 @@ if (!$VMNames){
     $VMNames = ($VMObjects).Name
 }
 
-#Get VMs, check variables, get status and re/start as needed.
+#Get VMs with deallocated status and start
 try {
     foreach ($VMName in $VMNames){
-        
-        # Get VM objects
         $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
         
-        # If started variable is true, get running VMs to restart.
-        if ($Started){
-            # Get status
-            $VMObjectStarted = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
-            
-            # Restart VM
-            Write-Host "Restarting VM:$VMName"
-            $VMObjectStarted | Restart-AzureRmVM
-        }
-        # If stopped variable is true, get stopped VMs to start.
-        if ($Stopped){
-            #Get status
-            $VMObjectStopped = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*deallocated*"}
+        #Get status
+        $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*deallocated*"}
 
-            #Start VM
-            Write-Host "Starting VM:$VMName"
-            $VMObjectStopped | Start-AzureRmVM
-        }
+        #Start VM
+        Write-Host "Starting VM:$VMName"
+        $VMObject | Start-AzureRmVM
     }
 }
 Catch {

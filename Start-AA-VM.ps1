@@ -7,10 +7,10 @@
 #References: Initially based on the Azure Automation Team script from the Azure portal.
 
 .Synopsis
-    A script that gets Azure VMs within a resource group, and starts them.
+    A script that gets Azure VMs within a resource group, starts them or restarts if running and parameter set.
 .DESCRIPTION
-    A script that gets Azure VMs within a resource group, and starts them,
-    when no VMs are specified, all VMs within the resource group are used,
+    A script that gets Azure VMs within a resource group, starts them or restarts if running and parameter set.
+    When no VMs are specified, all VMs within the resource group are used,
     designed to run in Azure Automation using the Run As Account (Service Principal).
 
 #>
@@ -31,7 +31,16 @@ Param(
         HelpMessage="Enter VM names in array notation"
     )]
     [string[]]
-    $VMNames 
+    $VMNames,
+
+    # Started Status
+    [Parameter(
+        Mandatory=$false,
+        HelpMessage="If true, started VMs will be restarted."
+    )]
+    [bool]
+    $RestartRunningVM = $false
+
 )
 
 $connectionName = "AzureRunAsConnection"
@@ -63,17 +72,29 @@ if (!$VMNames){
     $VMNames = ($VMObjects).Name
 }
 
-#Get VMs with deallocated status and start
+#Get VMs, check variables, get status and re/start as needed.
 try {
     foreach ($VMName in $VMNames){
+
+        # Get VM objects
         $VMObject = Get-AzureRMVM -ResourceGroupName $ResourceGroupName -Status -Name $VMName
         
-        #Get status
-        $VMObject = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*deallocated*"}
-
-        #Start VM
+        # Get status
+        $VMObjectStopped = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*deallocated*"}
+        
+        # Start VM
         Write-Host "Starting VM:$VMName"
-        $VMObject | Start-AzureRmVM
+        $VMObjectStopped | Start-AzureRmVM
+
+        # If variable is true, get running VMs and restart.
+        if ($RestartRunningVM){
+            # Get status
+            $VMObjectStarted = $VMObject | Where-Object {($_.Statuses)[1].DisplayStatus -like "*running*"}
+            
+            # Restart VM
+            Write-Host "Restarting VM:$VMName"
+            $VMObjectStarted | Restart-AzureRmVM
+        }
     }
 }
 Catch {
