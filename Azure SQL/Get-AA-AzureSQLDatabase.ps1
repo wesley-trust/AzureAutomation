@@ -18,6 +18,13 @@
 
 # Parameters
 Param(
+    [Parameter(
+        Mandatory=$true,
+        HelpMessage="Enter the resource group that all VMs belong to"
+    )]
+    [string]
+    $ResourceGroupName,
+    
     # SQL Server
     [Parameter(
         Mandatory=$true,
@@ -55,12 +62,12 @@ Param(
         Mandatory=$true,
         HelpMessage="Enter the email server password"
     )]
-    [securestring]
-    $EmailPassword,
+    [string]
+    $PlainTextPass,
 
     # SMTP Server
     [Parameter(
-        Mandatory=$false,
+        Mandatory=$true,
         HelpMessage="Enter the SMTP Server"
     )]
     [string]
@@ -68,7 +75,7 @@ Param(
 
     # Email To
     [Parameter(
-        Mandatory=$false,
+        Mandatory=$true,
         HelpMessage="Enter the recipient email address"
     )]
     [string]
@@ -76,7 +83,7 @@ Param(
 
     # Email From
     [Parameter(
-        Mandatory=$false,
+        Mandatory=$true,
         HelpMessage="Enter the sender email address"
     )]
     [string]
@@ -110,16 +117,11 @@ catch {
 
 try {
 
-    #Get SQL Server from resource
-    $SQLServer = Get-AzureRmResource | Where-Object name -eq $SQLServer | Get-AzureRmSqlServer
-
-    # If there is no SQL server found, throw exception
-    if (!$SQLServer){
-        throw "No SQL Server."
-    }
+    # Get SQL Server from resource, causes exception if group, or server do not exist.
+    Get-AzureRmSqlServer -ResourceGroupName $ResourceGroupName -ServerName $SQLServer
 
     # Get all databases from SQL server
-    $SQLDatabases = $SqlServer | Get-AzureRmSqlDatabase
+    $SQLDatabases = Get-AzureRmSqlDatabase -ResourceGroupName $ResourceGroupName -ServerName $SQLServer
 
     # If SQL Pool exclusion is true
     if ($SQLPoolExclusion){
@@ -137,10 +139,13 @@ try {
     if ($SQLDatabases){
 
         # Set subject and body
-        $Subject = Write-Output "Databases not in an Elastic Pool on SQL Server:"$SQLServer.servername
-        $Body = $SQLDatabases | Select-Object Databasename,CurrentServiceObjectiveName | Format-Table -AutoSize
+        $Subject =  "Databases not in an Elastic Pool on SQL Server $SQLServer"
+        $Body = $SQLDatabases.DatabaseName
+        $Body = [string]::join("<br/>",$body)
+
         
         # Build Email Credential
+        $EmailPassword = ConvertTo-SecureString $PlainTextPass -AsPlainText -Force
         $EmailCredential = New-Object System.Management.Automation.PSCredential ($EmailUsername, $EmailPassword)
         
         # Send email
@@ -150,6 +155,7 @@ try {
             -To $ToAddress `
             -From $FromAddress `
             -Subject $Subject `
+            -BodyAsHtml `
             -Body $Body
     }
     Else {
