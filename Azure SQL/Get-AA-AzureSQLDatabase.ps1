@@ -23,7 +23,7 @@ Param(
         Mandatory=$true,
         HelpMessage="Enter the SQL Server to check"
     )]
-    [string[]]
+    [string]
     $SQLServer,
 
     # SQL Pools
@@ -63,7 +63,7 @@ Param(
         Mandatory=$false,
         HelpMessage="Enter the SMTP Server"
     )]
-    [string[]]
+    [string]
     $SMTPServer,
 
     # Email To
@@ -71,7 +71,7 @@ Param(
         Mandatory=$false,
         HelpMessage="Enter the recipient email address"
     )]
-    [string[]]
+    [string]
     $ToAddress,
 
     # Email From
@@ -79,7 +79,7 @@ Param(
         Mandatory=$false,
         HelpMessage="Enter the sender email address"
     )]
-    [string[]]
+    [string]
     $FromAddress
 
 )
