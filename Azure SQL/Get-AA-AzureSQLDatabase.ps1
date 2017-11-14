@@ -3,7 +3,7 @@
 #Script name: Get-AA-AzureSQLDatabase
 #Creator: Wesley Trust
 #Date: 2017-11-13
-#Revision: 1
+#Revision: 2
 #References: Initially based on the Azure Automation Team script from the Azure portal.
 
 .Synopsis
@@ -87,15 +87,30 @@ Param(
         HelpMessage="Enter the sender email address"
     )]
     [string]
-    $FromAddress
+    $FromAddress,
 
+    # Email Errors To
+    [Parameter(
+        Mandatory=$true,
+        HelpMessage="Enter the error email address"
+    )]
+    [string]
+    $ToErrorAddress
 )
 
+# Variables
+
+# Build Email Credential
+$EmailPassword = ConvertTo-SecureString $PlainTextPass -AsPlainText -Force
+$EmailCredential = New-Object System.Management.Automation.PSCredential ($EmailUsername, $EmailPassword)
+
+# Set connection name
 $connectionName = "AzureRunAsConnection"
-try
-{
+
+# Authentiation
+try {
     # Get the connection "AzureRunAsConnection "
-    $ServicePrincipalConnection = Get-AutomationConnection -Name $ConnectionName         
+    $ServicePrincipalConnection = Get-AutomationConnection -Name $ConnectionName -ErrorAction Stop
 
     Write-Host "Authenticating with Azure"
     Add-AzureRmAccount `
@@ -105,23 +120,34 @@ try
         -CertificateThumbprint $servicePrincipalConnection.CertificateThumbprint 
 }
 catch {
-    if (!$servicePrincipalConnection)
-    {
+    if (!$servicePrincipalConnection){
         $ErrorMessage = "Connection $ConnectionName not found."
-        throw $ErrorMessage
-    } else{
-        Write-Error -Message $_.Exception
-        throw $_.Exception
     }
+    else {
+        Write-Error -Message $_.Exception
+    }
+
+    # Send error email
+    Send-MailMessage `
+        -Credential $EmailCredential `
+        -SmtpServer $SMTPServer `
+        -To $ToErrorAddress `
+        -From $FromAddress `
+        -Subject "Authentication Exception: $ErrorMessage" `
+        -BodyAsHtml `
+        -Body $_.Exception
+    
+    throw $_.Exception
 }
 
+# Script
 try {
 
     # Get SQL Server from resource, causes exception if group, or server do not exist.
-    Get-AzureRmSqlServer -ResourceGroupName $ResourceGroupName -ServerName $SQLServer
+    Get-AzureRmSqlServer -ResourceGroupName $ResourceGroupName -ServerName $SQLServer -ErrorAction Stop
 
-    # Get all databases from SQL server
-    $SQLDatabases = Get-AzureRmSqlDatabase -ResourceGroupName $ResourceGroupName -ServerName $SQLServer
+    # Get all databases from SQL server, cause exception if unsuccessful
+    $SQLDatabases = Get-AzureRmSqlDatabase -ResourceGroupName $ResourceGroupName -ServerName $SQLServer -ErrorAction Stop
 
     # If SQL Pool exclusion is true
     if ($SQLPoolExclusion){
@@ -143,11 +169,6 @@ try {
         $Body = $SQLDatabases.DatabaseName
         $Body = [string]::join("<br/>",$body)
 
-        
-        # Build Email Credential
-        $EmailPassword = ConvertTo-SecureString $PlainTextPass -AsPlainText -Force
-        $EmailCredential = New-Object System.Management.Automation.PSCredential ($EmailUsername, $EmailPassword)
-        
         # Send email
         Send-MailMessage `
             -Credential $EmailCredential `
@@ -156,7 +177,8 @@ try {
             -From $FromAddress `
             -Subject $Subject `
             -BodyAsHtml `
-            -Body $Body
+            -Body $Body `
+            -ErrorAction Stop
     }
     Else {
         Write-Output "No databases found."
@@ -165,5 +187,16 @@ try {
 }
 Catch {
     Write-Error -Message $_.Exception
+    
+    # Send error email
+    Send-MailMessage `
+        -Credential $EmailCredential `
+        -SmtpServer $SMTPServer `
+        -To $ToErrorAddress `
+        -From $FromAddress `
+        -Subject "Script Exception: Resource Group: $ResourceGroupName, SQL Server: $SQLServer" `
+        -BodyAsHtml `
+        -Body $_.Exception
+    
     throw $_.Exception
 }
