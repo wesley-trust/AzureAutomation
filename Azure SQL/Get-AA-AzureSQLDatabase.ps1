@@ -4,14 +4,14 @@
 #Creator: Wesley Trust
 #Date: 2017-11-13
 #Revision: 2
-#References: Initially based on the Azure Automation Team script from the Azure portal.
+#References: Automation Connection authentication initially based on the Azure Automation Team script (Azure portal).
 
 .Synopsis
-    A script that gets SQL databases on a specific server, excluding any specified pools.
+    A script that emails a list of SQL databases on a specific server, optionally excluding specified elastic pools.
 .DESCRIPTION
-    A script that gets SQL databases on a specific server, excluding any specified pools,
+    A script that gets SQL databases on a specific server, excluding databases in any specified pools,
     when no SQL pools are specified, all databases on the server are returned (excluding master),
-    includes error checking for whether the SQL server exists,
+    includes error checking for whether the SQL server or group exists, emailing script and authentication errors
     designed to run in Azure Automation using the Run As Account (Service Principal).
 
 #>
